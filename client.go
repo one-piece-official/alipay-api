@@ -82,7 +82,7 @@ func sign(params map[string]string, secret string) (sign string) {
 		buffer.WriteString(fmt.Sprintf("%s=%v&", k, params[k]))
 	}
 	s, i := buffer.String(), buffer.Len()
-	sign, err := util.RsaSignWithSha256Hex(s[:i-1], secret)
+	sign, err := RsaSignWithSha256Hex(s[:i-1], secret)
 	if err != nil {
 		return
 	}
