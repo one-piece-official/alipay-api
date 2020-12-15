@@ -1,4 +1,4 @@
-package alipay_api
+package alipay
 
 import (
 	"crypto"
