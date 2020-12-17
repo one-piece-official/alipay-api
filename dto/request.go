@@ -16,12 +16,12 @@ type RequestBody struct {
 }
 
 type UserAccountDeviceInfoRequest struct {
-	DeviceType  string   `json:"device_type"`
-	RequestFrom string   `json:"request_from"`
-	EncryptType string   `json:"encrypt_type"`
-	DeviceIDs   []string `json:"device_ids"`
+	DeviceType  string   `json:"device_type"`            // 设备类型，IMEI、IDFA、MOBILE(大小写敏感）
+	RequestFrom string   `json:"request_from"`           // 一般代表调用的合作机构名称，可写简称，大小写敏感
+	EncryptType string   `json:"encrypt_type,omitempty"` // 设备id的加密方式，如没有加密，可以不传。一般 MD5 即可满足需求
+	DeviceIDs   []string `json:"device_ids"`             // IDFA 或者 IMEI 号数组。同一笔请求中，数组中只能是 IDFA 或者 IMEI,不能既有 IMEI，又有 IDFA
 }
 
-func (req UserAccountDeviceInfoRequest) GetMethod() string {
+func (req *UserAccountDeviceInfoRequest) GetMethod() string {
 	return "alipay.user.account.device.info.query"
 }

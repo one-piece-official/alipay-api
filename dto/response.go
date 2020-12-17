@@ -26,4 +26,3 @@ type DeviceInfo struct {
 	DeviceID    string `json:"device_id"`
 	DeviceLabel string `json:"device_label"`
 }
-

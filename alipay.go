@@ -10,7 +10,6 @@ import (
 	"time"
 
 	"github.com/one-piece-official/alipay-api/dto"
-	"github.com/one-piece-official/alipay-api/pkg/method"
 	"github.com/one-piece-official/alipay-api/utils"
 )
 
@@ -22,21 +21,29 @@ const (
 	gatewayURL = "https://openapi.alipay.com/gateway.do"
 )
 
+type QueryRequest interface {
+	GetMethod() string
+}
+
 type Client struct {
-	appID    string
+	appID     string
 	appSecret string
 }
 
 // NewClient 初始化支付宝客户端.
 func NewClient(key, secret string) *Client {
 	return &Client{
-		appID:    key,
+		appID:     key,
 		appSecret: secret,
 	}
 }
 
-func (c *Client) Query(request method.QueryRequest, response interface{}) (err error) {
-	bizContentStr, _ := json.Marshal(request)
+func (c *Client) Query(req QueryRequest, response interface{}) (err error) {
+	bizContentStr, err := buildBizContent(req)
+	if err != nil {
+		return err
+	}
+
 	params := dto.RequestBody{
 		AppID:      c.appID,
 		Format:     format,
@@ -44,8 +51,8 @@ func (c *Client) Query(request method.QueryRequest, response interface{}) (err e
 		Timestamp:  time.Now().Format("2006-01-02 15:04:05"),
 		Version:    version,
 		SignType:   signType,
-		Method:     request.GetMethod(),
-		BizContent: string(bizContentStr),
+		Method:     req.GetMethod(),
+		BizContent: bizContentStr,
 	}
 
 	signString, err := c.composeParameterString(params)
@@ -71,10 +78,11 @@ func (c *Client) Query(request method.QueryRequest, response interface{}) (err e
 	if err != nil {
 		return
 	}
+
 	fmt.Println(bytes.NewBuffer(resByte))
-	err = json.Unmarshal(resByte, &response)
-	if err != nil {
-		return
+
+	if err = json.Unmarshal(resByte, &response); err != nil {
+		return fmt.Errorf("query json unmarshal failed: %w", err)
 	}
 
 	return nil
@@ -107,9 +115,14 @@ func (c *Client) composeParameterString(params dto.RequestBody) (signString stri
 	return signString, nil
 }
 
-func buildBizContent(params dto.RequestBody) string {
-	var mc = make(map[string]string)
-	byteBiz, _ := json.Marshal(mc)
-	biz := string(byteBiz)
-	return biz
+// buildBizContent 构造请求参数的集合.
+func buildBizContent(req QueryRequest) (biz string, err error) {
+	byteBiz, err := json.Marshal(req)
+	if err != nil {
+		return "", fmt.Errorf("biz content marshal failed: %w", err)
+	}
+
+	biz = string(byteBiz)
+
+	return biz, nil
 }
