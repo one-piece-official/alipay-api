@@ -7,8 +7,10 @@ import (
 	"io/ioutil"
 	"net/http"
 	"sort"
+	"strings"
 	"time"
 
+	"github.com/fatih/structs"
 	"github.com/google/go-querystring/query"
 	"github.com/one-piece-official/alipay-api/dto"
 	"github.com/one-piece-official/alipay-api/utils"
@@ -99,27 +101,16 @@ func (c *Client) Query(req QueryRequest, response interface{}) (err error) {
 
 // composeParameterString 拼装签名用的字符串.
 func composeParameterString(params dto.RequestBody) (signString string, err error) {
-	// 将结构体转换为 map
-	bytesData, err := json.Marshal(params)
-	if err != nil {
-		return "", fmt.Errorf("compose parameter string json marshal failed: %w", err)
-	}
-
-	requestDataMap := make(map[string]string)
-	_ = json.Unmarshal(bytesData, &requestDataMap)
+	// Convert Structs to Map
+	requestDataMap := structs.Map(params)
 
 	// 遍历 map 将 key 取出来并按照 ascii 排序
 	keys := make([]string, 0, len(requestDataMap))
-	for key := range requestDataMap {
-		keys = append(keys, key)
+	for k, v := range requestDataMap {
+		keys = append(keys, fmt.Sprintf(`%s=%s`, k, v))
 	}
 	sort.Strings(keys)
-
-	for _, key := range keys {
-		signString += key + "=" + requestDataMap[key] + "&"
-	}
-	// 去掉最后一个 "&"
-	signString = signString[:len(signString)-1]
+	signString = strings.Join(keys, "&")
 
 	return signString, nil
 }
