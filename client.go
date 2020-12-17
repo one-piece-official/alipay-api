@@ -10,8 +10,6 @@ import (
 	"net/url"
 	"sort"
 	"time"
-
-	"github.com/pkg/errors"
 )
 
 const (
@@ -64,39 +62,6 @@ func NewClient(appKey string, appSecret string, url string) Client {
 		appSecret: appSecret,
 		url:       url,
 	}
-}
-
-// TODO remove
-// nolint: noctx
-func (c *client) Execute(method string, query map[string]interface{}) (mapData map[string]interface{}, err error) {
-	params := c.commonParams()
-	params["method"] = method
-	bizContent := map[string]interface{}{}
-	for key, value := range query {
-		bizContent[key] = value
-	}
-	bizContentStr, _ := json.Marshal(bizContent)
-	params["biz_content"] = string(bizContentStr)
-	params["sign"] = sign(params, c.appSecret)
-	urlParams := url.Values{}
-	for key, value := range params {
-		urlParams.Set(key, value)
-	}
-	resp, err := http.PostForm(c.url, urlParams)
-	if err != nil {
-		return
-	}
-	defer resp.Body.Close()
-	resByte, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		return
-	}
-	err = json.NewDecoder(bytes.NewBuffer(resByte)).Decode(&mapData)
-	if err != nil {
-		return map[string]interface{}{}, errors.Wrap(err, "alipay json decode fail")
-	}
-
-	return mapData, nil
 }
 
 func sign(params map[string]string, secret string) (sign string) {
