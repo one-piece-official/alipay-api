@@ -8,23 +8,27 @@ package main
 
 import (
     "fmt"
-    alipay_api "github.com/one-piece-official/alipay-api"
+    alipay "github.com/one-piece-official/alipay-api"
 )
 
 func main() {
-	client := alipay_api.NewClient(
+	client := alipay.NewClient(
 		"configs.GetConfig().Alipay.AppKey",
 		"configs.GetConfig().Alipay.AppSecret",
 		"configs.GetConfig().Alipay.URL",
 	)
-	res, err := client.Execute("alipay.user.account.device.info.query", map[string]interface{}{
-		"device_type": "IMEI", "request_from": "request_from", "encrypt_type": "",
-		"device_ids": []string{"IMEI"},
-	})
+	
+	var res method.UserAccountDeviceInfoResponse
+	err := client.Query(&method.UserAccountDeviceInfoRequest{
+		DeviceType:  "IMEI",
+		RequestFrom: "requestfrom",
+		EncryptType: "",
+		DeviceIds:   []string{"111"},
+	}, &res)
 	if err != nil {
 		fmt.Println(err)
 	}
-	fmt.Println(res)
+	fmt.Println(res.AlipayUserAccountDeviceInfoQueryResponse.DeviceInfos[0].DeviceLabel)
 }
 ```
 

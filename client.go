@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"github.com/one-piece-official/alipay-api/pkg/method"
 	"io/ioutil"
 	"net/http"
 	"net/url"
@@ -20,13 +21,41 @@ const (
 )
 
 type Client interface {
-	Execute(method string, query map[string]interface{}) (map[string]interface{}, error)
+	Query(request method.QueryRequest, response interface{}) (err error)
 }
 
 type client struct {
 	appKey    string
 	appSecret string
 	url       string
+}
+
+func (c *client) Query(request method.QueryRequest, response interface{}) (err error) {
+	params := c.commonParams()
+	params["method"] = request.GetMethod()
+	bizContentStr, _ := json.Marshal(request)
+	params["biz_content"] = string(bizContentStr)
+	params["sign"] = sign(params, c.appSecret)
+	urlParams := url.Values{}
+	for key, value := range params {
+		urlParams.Set(key, value)
+	}
+	resp, err := http.PostForm(c.url, urlParams)
+	if err != nil {
+		return
+	}
+	defer resp.Body.Close()
+	resByte, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return
+	}
+	fmt.Println(bytes.NewBuffer(resByte))
+	err = json.Unmarshal(resByte, &response)
+	if err != nil {
+		return
+	}
+
+	return nil
 }
 
 func NewClient(appKey string, appSecret string, url string) Client {
@@ -37,6 +66,7 @@ func NewClient(appKey string, appSecret string, url string) Client {
 	}
 }
 
+// TODO remove
 // nolint: noctx
 func (c *client) Execute(method string, query map[string]interface{}) (mapData map[string]interface{}, err error) {
 	params := c.commonParams()
