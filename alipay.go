@@ -9,6 +9,7 @@ import (
 	"sort"
 	"time"
 
+	"github.com/google/go-querystring/query"
 	"github.com/one-piece-official/alipay-api/dto"
 	"github.com/one-piece-official/alipay-api/utils"
 )
@@ -44,6 +45,8 @@ func (c *Client) Query(req QueryRequest, response interface{}) (err error) {
 		return err
 	}
 
+	fmt.Printf("bizContentStr is:%s\n", bizContentStr)
+
 	params := dto.RequestBody{
 		AppID:      c.appID,
 		Format:     format,
@@ -55,11 +58,12 @@ func (c *Client) Query(req QueryRequest, response interface{}) (err error) {
 		BizContent: bizContentStr,
 	}
 
-	signString, err := c.composeParameterString(params)
+	signString, err := composeParameterString(params)
 	if err != nil {
 		return err
 	}
 
+	fmt.Printf("sign is:%s\n\n", signString)
 	sign, err := utils.RsaSignWithSha256Hex(signString, c.appSecret)
 	if err != nil {
 		return fmt.Errorf("rsa sign failed: %w", err)
@@ -67,7 +71,12 @@ func (c *Client) Query(req QueryRequest, response interface{}) (err error) {
 	params.Sign = sign
 
 	httpClient := http.DefaultClient
-	resp, err := utils.MakeHTTPClientGet(httpClient, gatewayURL, bytes.NewBuffer(nil))
+
+	v, _ := query.Values(&params)
+	requestURL := fmt.Sprintf("%s?%s", gatewayURL, v.Encode())
+
+	fmt.Printf("requestURL is %s\n", requestURL)
+	resp, err := utils.MakeHTTPClientGet(httpClient, requestURL, bytes.NewBuffer(nil))
 	if err != nil {
 		return
 	}
@@ -88,7 +97,8 @@ func (c *Client) Query(req QueryRequest, response interface{}) (err error) {
 	return nil
 }
 
-func (c *Client) composeParameterString(params dto.RequestBody) (signString string, err error) {
+// composeParameterString 拼装签名用的字符串.
+func composeParameterString(params dto.RequestBody) (signString string, err error) {
 	// 将结构体转换为 map
 	bytesData, err := json.Marshal(params)
 	if err != nil {
@@ -99,14 +109,13 @@ func (c *Client) composeParameterString(params dto.RequestBody) (signString stri
 	_ = json.Unmarshal(bytesData, &requestDataMap)
 
 	// 遍历 map 将 key 取出来并按照 ascii 排序
-	keys := make([]string, 10)
+	keys := make([]string, 0, len(requestDataMap))
 	for key := range requestDataMap {
 		keys = append(keys, key)
 	}
 	sort.Strings(keys)
 
 	for _, key := range keys {
-		fmt.Printf("%s: %s", key, requestDataMap[key])
 		signString += key + "=" + requestDataMap[key] + "&"
 	}
 	// 去掉最后一个 "&"

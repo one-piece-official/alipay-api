@@ -9,7 +9,7 @@ import (
 )
 
 func MakeHTTPClientGet(httpClient *http.Client, url string, body io.Reader) (*http.Response, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), responseTimeoutMillisecond*time.Millisecond)
+	ctx, cancel := context.WithTimeout(context.Background(), responseTimeoutMillisecond*time.Second)
 	defer cancel()
 
 	return getWithContext(ctx, httpClient, url, body)

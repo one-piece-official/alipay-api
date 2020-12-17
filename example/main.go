@@ -7,8 +7,9 @@ import (
 	dto "github.com/one-piece-official/alipay-api/dto"
 )
 
-const APPID = "your app id"
+const APPID = "you app id"
 
+// nolint
 var privateKey = []byte(`
 -----BEGIN RSA PRIVATE KEY-----
 your private key
