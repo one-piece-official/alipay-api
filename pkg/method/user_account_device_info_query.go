@@ -13,11 +13,11 @@ func (req UserAccountDeviceInfoRequest) GetMethod() string {
 
 type UserAccountDeviceInfoResponse struct {
 	AlipayUserAccountDeviceInfoQueryResponse AlipayUserAccountDeviceInfoQueryResponse `json:"alipay_user_account_device_info_query_response"`
-	Sign                                     string                                    `json:"sign"`
+	Sign                                     string                                   `json:"sign"`
 }
 
 type DeviceInfo struct {
-	DeviceId string `json:"device_id"`
+	DeviceId    string `json:"device_id"`
 	DeviceLabel string `json:"device_label"`
 }
 
