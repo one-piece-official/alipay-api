@@ -44,6 +44,8 @@ linters:
     - gochecknoglobals
     - godox # 禁用 TODO/BUG/FIXME 检查
     - wsl # 和 gofumpt 冲突
+    - exhaustivestruct
+    - gocritic
 
 run:
   skip-dirs:
