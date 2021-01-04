@@ -1,4 +1,4 @@
-package alipay
+package utils
 
 import (
 	"crypto"
@@ -8,15 +8,23 @@ import (
 	"crypto/x509"
 	"encoding/base64"
 	"encoding/pem"
+	"errors"
 	"fmt"
 	"strings"
+)
 
-	"github.com/pkg/errors"
+const responseTimeoutMillisecond = 300
+
+var (
+	errNoKeyFound             = errors.New("no key found")
+	errKeyPassphraseProtected = errors.New("this private key is passphrase protected")
+	errBlockTypeWrong         = errors.New("block type is wrong")
+	errHashWriteInvalid       = errors.New("hash write failed")
 )
 
 // RsaSignWithSha256Hex 签名：采用sha256算法进行签名并输出为hex格式（私钥PKCS1格式）.
 // NOTE: https://blog.csdn.net/whatday/article/details/97623948
-func RsaSignWithSha256Hex(data string, secret string) (signature string, err error) {
+func RsaSignWithSha256Hex(data, secret string) (signature string, err error) {
 	pk, err := parseRawPrivateKey([]byte(secret))
 	if err != nil {
 		return "", fmt.Errorf("invalid private key: %w", err)
@@ -24,10 +32,12 @@ func RsaSignWithSha256Hex(data string, secret string) (signature string, err err
 
 	bs, err := privateSign(pk, []byte(data))
 	if err != nil {
-		return "", fmt.Errorf("private sign failed: %w", err)
+		return "", fmt.Errorf("sign failed: %w", err)
 	}
 
-	return base64.StdEncoding.EncodeToString(bs), nil
+	signature = base64.StdEncoding.EncodeToString(bs)
+
+	return signature, nil
 }
 
 // ParseRawPrivateKey returns a private key from a PEM encoded private key.
@@ -37,18 +47,16 @@ func RsaSignWithSha256Hex(data string, secret string) (signature string, err err
 func parseRawPrivateKey(pemBytes []byte) (pk *rsa.PrivateKey, err error) {
 	block, _ := pem.Decode(pemBytes)
 	if block == nil {
-		return nil, errors.New("no key found")
+		return nil, errNoKeyFound
 	}
 
 	if encryptedBlock(block) {
-		return nil, errors.New("this private key is passphrase protected")
+		return nil, errKeyPassphraseProtected
 	}
 
 	// RFC5208 - https://tools.ietf.org/html/rfc5208
 	if block.Type != "RSA PRIVATE KEY" {
-		err = errors.New("block type is wrong")
-
-		return nil, fmt.Errorf("%w, unsupported key type %q", err, block.Type)
+		return nil, fmt.Errorf("%w, unsupported key type %q", errBlockTypeWrong, block.Type)
 	}
 
 	blockBytes := block.Bytes
@@ -92,10 +100,10 @@ func hash(data []byte) ([]byte, error) {
 	hash := sha256.New()
 	_, err := hash.Write(data)
 	if err != nil {
-		return data, errors.New("hash write failed")
+		return data, errHashWriteInvalid
 	}
 
 	s := hash.Sum(nil)
 
-	return s[:], nil
+	return s, nil
 }

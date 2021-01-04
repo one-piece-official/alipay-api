@@ -32,3 +32,7 @@ func main() {
 }
 ```
 
+## 参考
+
+* https://github.com/willxm/alipay-go-sdk
+* https://github.com/starudream/alipay-sdk-go

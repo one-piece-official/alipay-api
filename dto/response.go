@@ -1,14 +1,13 @@
-package method
+package dto
 
-type UserAccountDeviceInfoRequest struct {
-	DeviceType  string   `json:"device_type"`
-	RequestFrom string   `json:"request_from"`
-	EncryptType string   `json:"encrypt_type"`
-	DeviceIds   []string `json:"device_ids"`
-}
-
-func (req UserAccountDeviceInfoRequest) GetMethod() string {
-	return "alipay.user.account.device.info.query"
+type ResponseBody struct {
+	Success bool   `json:"success"`
+	Code    string `json:"code"`
+	Message string `json:"message"`
+	Data    struct {
+		Result string `json:"result"`
+		ID     string `json:"id"`
+	} `json:"data"`
 }
 
 type UserAccountDeviceInfoResponse struct {
@@ -16,14 +15,14 @@ type UserAccountDeviceInfoResponse struct {
 	Sign                                     string                                   `json:"sign"`
 }
 
-type DeviceInfo struct {
-	DeviceId    string `json:"device_id"`
-	DeviceLabel string `json:"device_label"`
-}
-
 type AlipayUserAccountDeviceInfoQueryResponse struct {
 	Code        string        `json:"code"`
 	Msg         string        `json:"msg"`
 	ResultCode  string        `json:"result_code"`
 	DeviceInfos []*DeviceInfo `json:"device_infos"`
+}
+
+type DeviceInfo struct {
+	DeviceID    string `json:"device_id"`
+	DeviceLabel string `json:"device_label"`
 }
