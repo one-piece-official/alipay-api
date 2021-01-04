@@ -47,7 +47,7 @@ func (c *Client) Query(req QueryRequest, response interface{}) (err error) {
 		return err
 	}
 
-	fmt.Printf("bizContentStr is:%s\n", bizContentStr)
+	// fmt.Printf("bizContentStr is:%s\n", bizContentStr)
 
 	params := dto.RequestBody{
 		AppID:      c.appID,
@@ -60,12 +60,9 @@ func (c *Client) Query(req QueryRequest, response interface{}) (err error) {
 		BizContent: bizContentStr,
 	}
 
-	signString, err := composeParameterString(params)
-	if err != nil {
-		return err
-	}
+	signString := composeParameterString(params)
 
-	fmt.Printf("sign is:%s\n\n", signString)
+	// fmt.Printf("sign is:%s\n\n", signString)
 	sign, err := utils.RsaSignWithSha256Hex(signString, c.appSecret)
 	if err != nil {
 		return fmt.Errorf("rsa sign failed: %w", err)
@@ -77,7 +74,7 @@ func (c *Client) Query(req QueryRequest, response interface{}) (err error) {
 	v, _ := query.Values(&params)
 	requestURL := fmt.Sprintf("%s?%s", gatewayURL, v.Encode())
 
-	fmt.Printf("requestURL is %s\n", requestURL)
+	// fmt.Printf("requestURL is %s\n", requestURL)
 	resp, err := utils.MakeHTTPClientGet(httpClient, requestURL, bytes.NewBuffer(nil))
 	if err != nil {
 		return
@@ -90,7 +87,7 @@ func (c *Client) Query(req QueryRequest, response interface{}) (err error) {
 		return
 	}
 
-	fmt.Println(bytes.NewBuffer(resByte))
+	// fmt.Println(bytes.NewBuffer(resByte))
 
 	if err = json.Unmarshal(resByte, &response); err != nil {
 		return fmt.Errorf("query json unmarshal failed: %w", err)
@@ -100,7 +97,7 @@ func (c *Client) Query(req QueryRequest, response interface{}) (err error) {
 }
 
 // composeParameterString 拼装签名用的字符串.
-func composeParameterString(params dto.RequestBody) (signString string, err error) {
+func composeParameterString(params dto.RequestBody) (signString string) {
 	// Convert Structs to Map
 	requestDataMap := structs.Map(params)
 
@@ -112,7 +109,7 @@ func composeParameterString(params dto.RequestBody) (signString string, err erro
 	sort.Strings(keys)
 	signString = strings.Join(keys, "&")
 
-	return signString, nil
+	return signString
 }
 
 // buildBizContent 构造请求参数的集合.
